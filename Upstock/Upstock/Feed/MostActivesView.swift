@@ -72,15 +72,32 @@ struct MostActivesView: View {
 struct MostActiveItemView: View {
     var mostActiveItem: MostActiveItem
     @State private var ticker: TickerInfoResponse?
-    @State private var tickerImg: UIImage = UIImage()
+    @State private var tickerImg: String = ""
     
     var body: some View {
         VStack {
             HStack {
-                Image(systemName: "apple.logo")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 30)
+                AsyncImage(url: URL(string: tickerImg)) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 35, height: 35)
+                        .clipShape(RoundedRectangle(cornerRadius: 2))
+                } placeholder: {
+                    if let uiImg = UIImage(named: "placeholder-2") {
+                        Image(uiImage: uiImg)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 40)
+                            .clipShape(RoundedRectangle(cornerRadius: 4))
+
+                    }
+                }
+                    
+//                Image(systemName: "apple.logo")
+//                    .resizable()
+//                    .aspectRatio(contentMode: .fit)
+//                    .frame(width: 30)
                 if let ticker = self.ticker {
                     VStack(alignment: .leading) {
                         Text(ticker.symbol)
@@ -95,7 +112,10 @@ struct MostActiveItemView: View {
                 }
                 
             }
-
+            if let ticker = self.ticker {
+                StockChartView(ticker: ticker)
+                
+            }
             
         }
         .padding()
@@ -130,11 +150,13 @@ struct MostActiveItemView: View {
         .onChange(of: ticker) {_,_ in
             if let ticker = ticker {
                 Task {
-                    let results: Result<Data, NinjaReqError> = try await NinjaManager.shared.getTickerImg(ticker: ticker.symbol)
+                    let results: Result<String, NinjaReqError> = try await NinjaManager.shared.getTickerImg(ticker: ticker.symbol)
                     switch results {
-                    case .success(let data):
-                        let strData = String(data: data, encoding: .utf8)
-                        print(strData)
+                    case .success(let imageURL):
+                        print(imageURL)
+                        tickerImg = imageURL
+//                        let strData = String(data: data, encoding: .utf8)
+//                        print(strData)
                         
 //                        do {
 //                            let tickerData = try JSONDecoder().decode(TickerAssetResponse.self, from: data)

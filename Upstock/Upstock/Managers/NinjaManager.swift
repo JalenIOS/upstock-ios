@@ -20,11 +20,13 @@ class NinjaManager: @unchecked Sendable {
 //    https://api.api-ninjas.com/v1/logo?ticker=\(ticker)
 //    X-Api-Key
     
-    func getTickerImg(ticker: String) async throws -> Result<Data, NinjaReqError> {
+    func getTickerImg(ticker: String) async throws -> Result<String, NinjaReqError> {
         
         guard let url = URL(string: "https://api.api-ninjas.com/v1/logo?ticker=\(ticker)") else { return .failure(.invalidURL) }
         
-        let req = URLRequest(url: url)
+        var req = URLRequest(url: url)
+        
+        req.addValue(configKey, forHTTPHeaderField: "X-Api-Key")
         
         do {
             let (data, response) = try await URLSession.shared.data(for: req)
@@ -33,7 +35,15 @@ class NinjaManager: @unchecked Sendable {
                 return .failure(.invalidRequest)
             }
             
-            return .success(data)
+            let jsonData = try JSONSerialization.jsonObject(with: data, options: []) as? [[String: Any]]
+            
+            guard  let jsonData = jsonData else { return .failure(.invalidData)}
+            
+            if jsonData.count > 0, let imageUrl = jsonData.first?["image"] as? String {
+                return .success(imageUrl)
+            }
+            
+            return .failure(.invalidData)
                 
             
 //            return .failure(.invalidData)

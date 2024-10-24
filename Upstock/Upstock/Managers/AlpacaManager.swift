@@ -28,6 +28,42 @@ class AlpacaManager: @unchecked Sendable {
         
     }
     
+    func getBarData(symbol: String) async throws -> Result<[StockBar], AlpacaReqError> {
+        let urlString = "https://data.alpaca.markets/v2/stocks/\(symbol)/bars?timeframe=12Month&limit=1000&adjustment=raw&feed=sip&sort=asc&start=2022-12-01T00:00:00Z&end=2024-10-15T23:59:59Z"
+        guard let url = URL(string: urlString) else {
+            return .failure(.invalidURL(urlString))
+        }
+        
+        var req = URLRequest(url: url)
+        
+        req.addValue(config.id, forHTTPHeaderField: AlpacaConfig.headerIdKey)
+        req.addValue(config.secret, forHTTPHeaderField: AlpacaConfig.headerSecretKey)
+        
+        do {
+            let (data, response) = try await URLSession.shared.data(for: req)
+            
+            let strData = String(data: data, encoding: .utf8)
+            print(strData)
+            
+            if let response = response as? HTTPURLResponse, response.statusCode != 200 {
+                
+                return .failure(.invalidRequest)
+            }
+            
+            let barResponse = try JSONDecoder().decode(HistoricalBarsResponse.self, from: data)
+            
+                
+            return .success(barResponse.bars)
+            
+            
+        } catch {
+            print("error getting bar data: \(error)")
+            
+            return .failure(.invalidData)
+        }
+        
+    }
+    
     func queryStocks(for queryType: AlpacaRequestFor, urlAddOn: String? = nil) async throws -> Result<Data, AlpacaReqError> {
         print(config)
         
@@ -45,9 +81,9 @@ class AlpacaManager: @unchecked Sendable {
         do {
             let (data, response) = try await URLSession.shared.data(for: req)
             
-//            if let rawResponse = String(data: data, encoding: .utf8) {
-//                print("Raw Response: \(rawResponse)")
-//            }
+            if let rawResponse = String(data: data, encoding: .utf8) {
+                print("Raw Response: \(rawResponse)")
+            }
             if let response = response as? HTTPURLResponse, response.statusCode != 200 {
                 return .failure(.invalidRequest)
             }
@@ -72,6 +108,7 @@ enum AlpacaRequestFor {
     case mostActives
     case tickerInfo
     case tickerAsset
+    case historicalBars
     
     func getUrlString(addOn: String? = nil) -> String {
         switch self {
@@ -91,6 +128,13 @@ enum AlpacaRequestFor {
             }
             return baseUrl
             
+        case .historicalBars:
+            let baseUrl = "https://data.alpaca.markets/v2/stocks/bars?timeframe=12Month&limit=1000&adjustment=raw&feed=sip&sort=asc&start=2022-01-01T00:00:00Z&end=2024-10-15T23:59:59Z"
+            if let addOn = addOn {
+                print(baseUrl + addOn)
+                return baseUrl + addOn
+            }
+            return baseUrl
         }
     }
     
@@ -161,6 +205,32 @@ struct MostActiveItem: Codable, Hashable {
 
 struct TickerAssetResponse: Codable, Hashable  {
     var file: Data
+}
+
+struct HistoricalBarsResponse: Codable, Hashable {
+    var bars: [StockBar]
+}
+
+struct StockBar: Codable, Hashable {
+    var close: Double?
+    var high: Double?
+    var low: Double?
+    var trades: Double?
+    var open: Double?
+    var volume: Double?
+    var volumeWeightedAvg: Double?
+    var timestamp: String
+    
+    enum CodingKeys: String, CodingKey{
+        case close = "c"
+        case high = "h"
+        case low = "l"
+        case trades = "n"
+        case open = "o"
+        case volume = "v"
+        case volumeWeightedAvg = "vw"
+        case timestamp = "t"
+    }
 }
 
 
