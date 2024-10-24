@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct UpstockContentView: View {
-    
+    @State private var currTabView: TabViewType = .feed
     
     var body: some View {
         ZStack {
@@ -18,7 +18,7 @@ struct UpstockContentView: View {
             
            
             VStack(spacing:0) {
-
+                currTabView.view()
             }
             .fontDesign(.rounded)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
@@ -30,17 +30,20 @@ struct UpstockContentView: View {
                             Text("Upstock")
                                 .font(.title)
                                 .fontWeight(.semibold)
+                                .foregroundStyle(LinearGradient(colors: [.red, .orange], startPoint: .leading, endPoint: .trailing))
+                                
                             
                             Image(systemName: "chart.xyaxis.line")
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
                                 .frame(width: 25)
-                                .foregroundStyle(Color.appGreenPrimary)
+                                .foregroundStyle(Color.orange)
                             
                         }
                         Spacer()
                         
                         Text("$ 100,000.00")
+                            .font(.body)
                             .fontWeight(.bold)
                             .foregroundStyle(Color.appGreenPrimary)
                         
@@ -52,87 +55,7 @@ struct UpstockContentView: View {
                 }
             }
             .safeAreaInset(edge: .bottom) {
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 5)) {
-                    
-                    LazyHGrid(rows: [GridItem(.flexible()), GridItem(.flexible())]){
-                        Image(systemName: "newspaper")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 30)
-                        
-//                        Spacer()
-                        
-                        Text("Feed")
-                            .font(.footnote)
-                    }
-                    .foregroundStyle(Color.appGreenPrimary)
-                    
-                    LazyHGrid(rows: [GridItem(.flexible()), GridItem(.flexible())]) {
-                        Image(systemName: "chart.bar.xaxis")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 30)
-                        
-//                        Spacer()
-
-                        
-                        Text("Reports")
-                            .font(.footnote)
-                    }
-                    .foregroundStyle(Color.white.opacity(0.5))
-                    
-                    LazyHGrid(rows: [GridItem(.flexible()), GridItem(.flexible())]){
-                        ZStack {
-                            Image(systemName: "briefcase.fill")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 40)
-                            Text("💰")
-                                .foregroundStyle(Color.appGreenPrimary)
-                                .fontWeight(.bold)
-                        }
-                        
-//                        Spacer()
-
-                        
-                        Text("Portfolio")
-                            .font(.footnote)
-                    }
-                    .foregroundStyle(Color.white.opacity(0.5))
-                    
-                    LazyHGrid(rows: [GridItem(.flexible()), GridItem(.flexible())]) {
-                        Image(systemName: "list.bullet.below.rectangle")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 30)
-                        
-//                        Spacer()
-
-                        
-                        Text("Watchlist")
-                            .font(.footnote)
-                    }
-                    .foregroundStyle(Color.white.opacity(0.5))
-                    
-                    LazyHGrid(rows: [GridItem(.flexible()), GridItem(.flexible())]) {
-                        Image(systemName: "person.fill")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 30)
-                        
-//                        Spacer()
-
-                        
-                        Text("Account")
-                            .font(.footnote)
-                    }
-                    .foregroundStyle(Color.white.opacity(0.5))
-                    
-                }
-                .padding()
-                .compositingGroup()
-                .background(.black.opacity(0.95))
-                .shadow(color: Color.appGreenPrimary.opacity(0.15), radius: 50)
+                AppTabBar(currTabView: $currTabView)
                 
             }
             
@@ -147,6 +70,141 @@ struct UpstockContentView: View {
         }
     }
 }
+
+enum TabViewType {
+    case feed
+    case reports
+    case portfolio
+    case watchlist
+    case account
+    
+    @ViewBuilder
+    func view() -> some View {
+        switch self {
+        case .feed:
+            FeedView()
+        default:
+            EmptyView()
+        }
+    }
+}
+
+struct AppTabBar: View {
+    @Binding var currTabView: TabViewType
+    
+    var body: some View {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 5)) {
+            
+            Button {
+                currTabView = .feed
+            } label: {
+                LazyHGrid(rows: [GridItem(.flexible()), GridItem(.flexible())]){
+                    Image(systemName: "newspaper")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 30)
+                    
+                    
+                    Text("Feed")
+                        .font(.footnote)
+                }
+                .foregroundStyle(Color.appGreenPrimary)
+                
+            }
+            
+            Button {
+                currTabView = .reports
+
+            } label: {
+                LazyHGrid(rows: [GridItem(.flexible()), GridItem(.flexible())]) {
+                    Image(systemName: "chart.bar.xaxis")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 30)
+                    
+                    
+                    
+                    Text("Reports")
+                        .font(.footnote)
+                }
+                .foregroundStyle(Color.white.opacity(0.5))
+                
+            }
+            
+            Button {
+                currTabView = .portfolio
+
+            } label: {
+                LazyHGrid(rows: [GridItem(.flexible()), GridItem(.flexible())]){
+                    ZStack {
+                        Image(systemName: "briefcase.fill")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 40)
+                        Text("💰")
+                            .foregroundStyle(Color.appGreenPrimary)
+                            .fontWeight(.bold)
+                    }
+                    
+                    
+                    
+                    Text("Portfolio")
+                        .font(.footnote)
+                }
+                .foregroundStyle(Color.white.opacity(0.5))
+                
+            }
+            
+            Button {
+                currTabView = .watchlist
+
+            } label: {
+                LazyHGrid(rows: [GridItem(.flexible()), GridItem(.flexible())]) {
+                    Image(systemName: "list.bullet.below.rectangle")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 30)
+                    
+                    
+                    Text("Watchlist")
+                        .font(.footnote)
+                }
+                .foregroundStyle(Color.white.opacity(0.5))
+                
+            }
+            
+            Button {
+                currTabView = .account
+
+            } label: {
+                LazyHGrid(rows: [GridItem(.flexible()), GridItem(.flexible())]) {
+                    Image(systemName: "person.fill")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 30)
+                    
+                    //                        Spacer()
+                    
+                    
+                    Text("Account")
+                        .font(.footnote)
+                }
+                .foregroundStyle(Color.white.opacity(0.5))
+                
+            }
+            
+        }
+        .padding()
+        .compositingGroup()
+        .background(.black.opacity(0.95))
+        .shadow(color: Color.appGreenPrimary.opacity(0.15), radius: 50)
+        
+    }
+}
+
+
+
+
 
 
 #Preview {
